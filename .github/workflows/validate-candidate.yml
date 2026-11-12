@@ -17,8 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: 0a1386af48ea9999ecc25d9eada83f2b649803a5
-          fetch-depth: 2
+          ref: 9c4854fb237cbd967f0003a1de1dd82a60d0654a
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-java@v6
         with:
