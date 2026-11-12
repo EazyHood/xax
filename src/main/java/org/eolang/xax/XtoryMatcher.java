@@ -78,17 +78,54 @@ public final class XtoryMatcher extends BaseMatcher<Xtory> {
     public XtoryMatcher(final Matcher<XML> ext) {
         super();
         this.extra = ext;
+        this.header = "a story satisfying every XPath assertion";
     }
 
     @Override
     public boolean matches(final Object object) {
-        final Xtory xtory = Xtory.class.cast(object);
-        Assumptions.assumeTrue(xtory.map().get("skip") == null);
-        this.after = xtory.xsline().pass(xtory.before());
+        final boolean result;
+        if (object instanceof Xtory) {
+            result = this.matchesStory(Xtory.class.cast(object));
+        } else {
+            this.match = false;
+            this.header = "an Xtory";
+            this.summary = String.format("Expected an Xtory, received %s", object);
+            result = false;
+        }
+        return result;
+    }
+
+    @Override
+    public void describeTo(final Description desc) {
+        if (this.match) {
+            this.extra.describeTo(desc);
+        } else {
+            desc.appendText(this.header);
+        }
+    }
+
+    @Override
+    public void describeMismatch(final Object story, final Description desc) {
+        if (this.match) {
+            this.extra.describeMismatch(this.after, desc);
+        } else {
+            desc.appendText(System.lineSeparator()).appendText(this.summary);
+        }
+    }
+
+    private boolean matchesStory(final Xtory xtory) {
+        Assumptions.assumeFalse(
+            Boolean.parseBoolean(String.valueOf(xtory.map().get("skip")))
+        );
+        final Collection<String> expressions = xtory.asserts();
+        if (expressions.isEmpty()) {
+            throw new IllegalArgumentException("No XPath assertions were found in the story");
+        }
+        this.after = xtory.after();
         final Collection<Map.Entry<String, Boolean>> xpaths =
             new ArrayList<>(0);
         int failures = 0;
-        for (final String xpath : xtory.asserts()) {
+        for (final String xpath : expressions) {
             final boolean success = !this.after.nodes(xpath).isEmpty();
             xpaths.add(new AbstractMap.SimpleImmutableEntry<>(xpath, success));
             if (!success) {
@@ -132,23 +169,5 @@ public final class XtoryMatcher extends BaseMatcher<Xtory> {
             }
         }
         return this.match && this.extra.matches(this.after);
-    }
-
-    @Override
-    public void describeTo(final Description desc) {
-        if (this.match) {
-            this.extra.describeTo(desc);
-        } else {
-            desc.appendText(this.header);
-        }
-    }
-
-    @Override
-    public void describeMismatch(final Object story, final Description desc) {
-        if (this.match) {
-            this.extra.describeMismatch(this.after, desc);
-        } else {
-            desc.appendText(System.lineSeparator()).appendText(this.summary);
-        }
     }
 }
