@@ -1,0 +1,21 @@
+name: Validate combined xax fixes
+on:
+  push:
+    branches: [validate-combined-20261112]
+permissions:
+  contents: read
+jobs:
+  combined:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 32bfdd50c293eba60d8702a30e906b5717b73d61
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - run: mvn --errors --batch-mode clean install -Pqulice
