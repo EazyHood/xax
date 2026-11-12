@@ -34,7 +34,7 @@ jobs:
             echo 'The original implementation unexpectedly passed'
             exit 1
           fi
-          grep -E 'Tests run:.*(Failures: [1-9]|Errors: [1-9])' baseline.log
+          grep -E 'Tests run:.*(Failures: [1-9]|Errors: [1-9])' baseline.log || { cat baseline.log; exit 1; }
           git checkout HEAD -- src/main/java/org/eolang/xax/XtoryMatcher.java
       - name: Run complete verification on the candidate
         run: mvn --errors --batch-mode clean install -Pqulice
