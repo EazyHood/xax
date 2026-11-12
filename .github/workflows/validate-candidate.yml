@@ -1,0 +1,40 @@
+name: Validate xax 216
+on:
+  push:
+    branches: [validate-216-20261112]
+permissions:
+  contents: read
+jobs:
+  candidate:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      matrix:
+        os: [ubuntu-24.04]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 8678bb4a4d9b41b777510a29faffde5164cbe6d3
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Prove the focused regression on the original implementation
+        run: |
+          set -eu
+          git checkout f91139d48091bf41d3b263af3fcbcf2e3add7811 -- src/main/java/org/eolang/xax/XtoryMatcher.java
+          if mvn --errors --batch-mode -Dtest=XtoryMatcherDecoratorsTest test > baseline.log 2>&1; then
+            cat baseline.log
+            echo 'The original implementation unexpectedly passed'
+            exit 1
+          fi
+          grep -E 'Tests run:.*(Failures: [1-9]|Errors: [1-9])' baseline.log
+          git checkout HEAD -- src/main/java/org/eolang/xax/XtoryMatcher.java
+      - name: Run complete verification on the candidate
+        run: mvn --errors --batch-mode clean install -Pqulice
